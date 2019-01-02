@@ -13,7 +13,7 @@ type
   symbol = (nul, ident, number, plus, minus, times, slash, oddsym,
   eql, neq, lss, leq, gtr, geq, lparen, rparen, comma, semicolon,
   period, becomes, beginsym, endsym, ifsym, thensym,
-  whilesym, dosym, callsym, constsym, varsym, procsym );
+  whilesym, dosym, callsym, constsym, varsym, procsym);
 
   alfa = packed array [1..al] of char; 
 
