@@ -24,9 +24,9 @@ type
   fct = (lit, opr, lod, sto, cal, int, jmp, jpc); {functions}
 
   instruction = packed record
-	                  f : fct;  {功能码}
-	                  l : 0..levmax; {相对层数}
-	                  a : 0..amax; {相对地址}
+                    f : fct;  {功能码}
+                    l : 0..levmax; {相对层数}
+                    a : 0..amax; {相对地址}
                   end;
                   {LIT 0,a : 取常数a
                   OPR 0,a : 执行运算a
@@ -59,7 +59,7 @@ var
               case kind : obj of
                 constant : (val : integer);
                 variable, proc : (level, adr : integer)
-            	end;
+              end;
   fileIn, fileOut : text;
 
 procedure error (n : integer);
@@ -284,7 +284,7 @@ procedure  block(lev, tx : integer; fsys : symset);
     procedure  expression(fsys : symset);
       var  addop : symbol;
       procedure  term(fsys : symset);
-      	var  mulop : symbol;
+        var  mulop : symbol;
         procedure  factor(fsys : symset);
           var i : integer;
           begin  
@@ -304,7 +304,7 @@ procedure  block(lev, tx : integer; fsys : symset);
                         {若id是常数, 生成指令,将常数val取到栈顶}
                         variable : gen(lod, lev-level, adr);
                         {若id是变量, 生成指令,将该变量取到栈顶;
-          							lev: 当前语句所在过程的层号;
+                        lev: 当前语句所在过程的层号;
                         level: 定义该变量的过程层号;
                         adr: 变量在其过程的数据空间的相对地址}
                         proc : error(21)
@@ -313,192 +313,192 @@ procedure  block(lev, tx : integer; fsys : symset);
                     getsym {取下一记号}
                 end 
                 else if sym = number then {当前记号是数字}
-               		begin
-										if num > amax then {若数值越界,则出错}
-											begin error(30); num := 0 end;
-										gen(lit, 0, num); 
-						        {生成一条指令, 将常数num取到栈顶}
-						        getsym {取下一记号}
-									end 
-								else if sym = lparen then {如果当前记号是左括号}
-									begin  
-										getsym; {取下一记号}
-										expression([rparen]+fsys); {处理表达式}
-										if sym = rparen then getsym
-										{如果当前记号是右括号, 则取下一记号,否则出错}
-										else error(22)
-									end;
-								test(fsys, [lparen], 23) 
-								{测试当前记号是否同步, 否则出错, 跳过一些记号}
-							end {while}
-					end {factor};
+                  begin
+                    if num > amax then {若数值越界,则出错}
+                      begin error(30); num := 0 end;
+                    gen(lit, 0, num); 
+                    {生成一条指令, 将常数num取到栈顶}
+                    getsym {取下一记号}
+                  end 
+                else if sym = lparen then {如果当前记号是左括号}
+                  begin  
+                    getsym; {取下一记号}
+                    expression([rparen]+fsys); {处理表达式}
+                    if sym = rparen then getsym
+                    {如果当前记号是右括号, 则取下一记号,否则出错}
+                    else error(22)
+                  end;
+                test(fsys, [lparen], 23) 
+                {测试当前记号是否同步, 否则出错, 跳过一些记号}
+              end {while}
+          end {factor};
 
-  			begin {term}
-			    factor(fsys+[times, slash]); {处理项中第一个因子}
-			    while sym in [times, slash] do 
-						{当前记号是“乘”或“除”号}
-				    begin
-				      mulop := sym; {运算符存入mulop} 
-							getsym; {取下一记号}
-				      factor(fsys+[times, slash]); {处理一个因子}
-				      if mulop = times then gen(opr, 0, 4)
-						    {若mulop是“乘”号,生成一条乘法指令}
-	            else gen(opr, 0, 5)
-						    {否则, mulop是除号, 生成一条除法指令}
-				    end
-			  end {term};
+        begin {term}
+          factor(fsys+[times, slash]); {处理项中第一个因子}
+          while sym in [times, slash] do 
+            {当前记号是“乘”或“除”号}
+            begin
+              mulop := sym; {运算符存入mulop} 
+              getsym; {取下一记号}
+              factor(fsys+[times, slash]); {处理一个因子}
+              if mulop = times then gen(opr, 0, 4)
+                {若mulop是“乘”号,生成一条乘法指令}
+              else gen(opr, 0, 5)
+                {否则, mulop是除号, 生成一条除法指令}
+            end
+        end {term};
 
-			begin {expression}
-			  if sym in [plus, minus] then {若第一个记号是加号或减号}
-				  begin 
-						addop := sym;  {“+”或“-”存入addop}
-						getsym; 
-						term(fsys+[plus, minus]); {处理一个项}
-						if addop = minus then gen(opr, 0, 1)
-						{若第一个项前是负号, 生成一条“负运算”指令}
-			  	end 
-			  else term(fsys+[plus, minus]);
-			  {第一个记号不是加号或减号, 则处理一个项}
-			  while sym in [plus, minus] do {若当前记号是加号或减号}
-					begin
-						addop := sym; {当前算符存入addop} 
-						getsym; {取下一记号}
-						term(fsys+[plus, minus]); {处理一个项}
-						if addop = plus then gen(opr, 0, 2)
-						{若addop是加号, 生成一条加法指令}
-						else gen(opr, 0, 3)
-						{否则, addop是减号, 生成一条减法指令}
-					end
-			end {expression};
+      begin {expression}
+        if sym in [plus, minus] then {若第一个记号是加号或减号}
+          begin 
+            addop := sym;  {“+”或“-”存入addop}
+            getsym; 
+            term(fsys+[plus, minus]); {处理一个项}
+            if addop = minus then gen(opr, 0, 1)
+            {若第一个项前是负号, 生成一条“负运算”指令}
+          end 
+        else term(fsys+[plus, minus]);
+        {第一个记号不是加号或减号, 则处理一个项}
+        while sym in [plus, minus] do {若当前记号是加号或减号}
+          begin
+            addop := sym; {当前算符存入addop} 
+            getsym; {取下一记号}
+            term(fsys+[plus, minus]); {处理一个项}
+            if addop = plus then gen(opr, 0, 2)
+            {若addop是加号, 生成一条加法指令}
+            else gen(opr, 0, 3)
+            {否则, addop是减号, 生成一条减法指令}
+          end
+      end {expression};
 
-		procedure  condition(fsys : symset);
-			var  relop : symbol;
-			begin
-				if sym = oddsym then {如果当前记号是“odd”}
-					begin
-						getsym;  {取下一记号}
-						expression(fsys); {处理算术表达式}
-						gen(opr, 0, 6) {生成指令,判定表达式的值是否为奇数,
-						是,则取“真”;不是, 则取“假”}
-					end 
-				else {如果当前记号不是“odd”}
-					begin
-						expression([eql, neq, lss, gtr, leq, geq] + fsys); 
-						{处理算术表达式}
-						if not (sym in [eql, neq, lss, leq, gtr, geq]) then
-						{如果当前记号不是关系符, 则出错; 否则,做以下工作}
-							error(20)  
-						else
-							begin
-								relop := sym; {关系符存入relop} 
-								getsym; {取下一记号} 
-								expression(fsys); {处理关系符右边的算术表达式}
-								case relop of
-									eql : gen(opr, 0, 8); 
-									{生成指令, 判定两个表达式的值是否相等}
-									neq : gen(opr, 0, 9);
-									{生成指令, 判定两个表达式的值是否不等}
-									lss : gen(opr, 0, 10);
-									{生成指令,判定前一表达式是否小于后一表达式}
-									geq : gen(opr, 0, 11);
-									{生成指令,判定前一表达式是否大于等于后一表达式}
-									gtr : gen(opr, 0, 12);
-									{生成指令,判定前一表达式是否大于后一表达式}
-									leq : gen(opr, 0, 13);
-									{生成指令,判定前一表达式是否小于等于后一表达式}
-								end
-							end
-					end
-			end {condition};
+    procedure  condition(fsys : symset);
+      var  relop : symbol;
+      begin
+        if sym = oddsym then {如果当前记号是“odd”}
+          begin
+            getsym;  {取下一记号}
+            expression(fsys); {处理算术表达式}
+            gen(opr, 0, 6) {生成指令,判定表达式的值是否为奇数,
+            是,则取“真”;不是, 则取“假”}
+          end 
+        else {如果当前记号不是“odd”}
+          begin
+            expression([eql, neq, lss, gtr, leq, geq] + fsys); 
+            {处理算术表达式}
+            if not (sym in [eql, neq, lss, leq, gtr, geq]) then
+            {如果当前记号不是关系符, 则出错; 否则,做以下工作}
+              error(20)  
+            else
+              begin
+                relop := sym; {关系符存入relop} 
+                getsym; {取下一记号} 
+                expression(fsys); {处理关系符右边的算术表达式}
+                case relop of
+                  eql : gen(opr, 0, 8); 
+                  {生成指令, 判定两个表达式的值是否相等}
+                  neq : gen(opr, 0, 9);
+                  {生成指令, 判定两个表达式的值是否不等}
+                  lss : gen(opr, 0, 10);
+                  {生成指令,判定前一表达式是否小于后一表达式}
+                  geq : gen(opr, 0, 11);
+                  {生成指令,判定前一表达式是否大于等于后一表达式}
+                  gtr : gen(opr, 0, 12);
+                  {生成指令,判定前一表达式是否大于后一表达式}
+                  leq : gen(opr, 0, 13);
+                  {生成指令,判定前一表达式是否小于等于后一表达式}
+                end
+              end
+          end
+      end {condition};
 
-		begin {statement}
-			if sym = ident then {处理赋值语句}
-				begin  
-					i := position(id); 
-					{在符号表中查id, 返回id在符号表中的入口}
-					if i = 0 then error(11) {若在符号表中查不到id, 则出错, 否则做以下工作}
-					else if table[i].kind <> variable then
-						{若标识符id不是变量, 则出错}
-						begin {对非变量赋值} error(12); i := 0; end;
-					getsym; {取下一记号}
-					if sym = becomes then getsym else error(13);
-					{若当前是赋值号, 取下一记号, 否则出错}
-					expression(fsys); {处理表达式}
-					if i <> 0 then {若赋值号左边的变量id有定义}
-						with table[i] do gen(sto, lev-level, adr)
-						{生成一条存数指令, 将栈顶(表达式)的值存入变量id中;
-						lev: 当前语句所在过程的层号;
-						level: 定义变量id的过程的层号;
-						adr: 变量id在其过程的数据空间的相对地址}
-				end 
-			else if sym = callsym then {处理过程调用语句}
-				begin  
-					getsym; {取下一记号}
-					if sym <> ident then error(14) 
-					else {如果下一记号不是标识符(过程名),则出错,否则做以下工作}
-						begin 
-							i := position(id); {查符号表,返回id在表中的位置}
-							if i = 0 then error(11) 
-							else {如果在符号表中查不到, 则出错; 否则,做以下工作}
-								with table[i] do
-									if kind = proc then 
-										{如果在符号表中id是过程名}
-										gen(cal, lev-level, adr)
-										{生成一条过程调用指令;
-										 lev: 当前语句所在过程的层号
-										 level: 定义过程名id的层号;
-										 adr: 过程id的代码中第一条指令的地址}
-									else error(15); {若id不是过程名,则出错}
-							getsym {取下一记号}
-						end
-				end 
-			else if sym = ifsym then {处理条件语句}
-				begin
-					getsym; {取下一记号} 
-					condition([thensym, dosym]+fsys); {处理条件表达式}
-					if sym = thensym then getsym else error(16);
-					{如果当前记号是“then”,则取下一记号; 否则出错}
-					cx1 := cx; {cx1记录下一代码的地址} 
-					gen(jpc, 0, 0); {生成指令,表达式为“假”转到某地址(待填),
-					否则顺序执行}
-					statement(fsys); {处理一个语句}
-					code[cx1].a := cx 
-					{将下一个指令的地址回填到上面的jpc指令地址栏}
-				end
-			else if sym = beginsym then {处理语句序列}
-				begin
-					getsym;  statement([semicolon, endsym]+fsys);
-					{取下一记号, 处理第一个语句}
-					while sym in [semicolon]+statbegsys do 
-						{如果当前记号是分号或语句的开始符号,则做以下工作}
-						begin
-							if sym = semicolon then getsym else error(10);
-							{如果当前记号是分号,则取下一记号, 否则出错}
-							statement([semicolon, endsym]+fsys) {处理下一个语句}
-						end;
-					if sym = endsym then getsym else error(17)
-					{如果当前记号是“end”,则取下一记号,否则出错}
-				end 
-			else if sym = whilesym then {处理循环语句}
-				begin
-					cx1 := cx; {cx1记录下一指令地址,即条件表达式的
-					第一条代码的地址} 
-					getsym; {取下一记号}
-					condition([dosym]+fsys); {处理条件表达式}
-					cx2 := cx; {记录下一指令的地址} 
-					gen(jpc, 0, 0); {生成一条指令,表达式为“假”转到某地
-					址(待回填), 否则顺序执行}
-					if sym = dosym then getsym else error(18);
-					{如果当前记号是“do”,则取下一记号, 否则出错}
-					statement(fsys); {处理“do”后面的语句}
-					gen(jmp, 0, cx1); {生成无条件转移指令, 转移到“while”后的
-					条件表达式的代码的第一条指令处} 
-					code[cx2].a := cx 
-					{把下一指令地址回填到前面生成的jpc指令的地址栏}
-				end;
-			test(fsys, [ ], 19) 
-			{测试下一记号是否正常, 否则出错, 跳过一些记号}
-		end {statement};
+    begin {statement}
+      if sym = ident then {处理赋值语句}
+        begin  
+          i := position(id); 
+          {在符号表中查id, 返回id在符号表中的入口}
+          if i = 0 then error(11) {若在符号表中查不到id, 则出错, 否则做以下工作}
+          else if table[i].kind <> variable then
+            {若标识符id不是变量, 则出错}
+            begin {对非变量赋值} error(12); i := 0; end;
+          getsym; {取下一记号}
+          if sym = becomes then getsym else error(13);
+          {若当前是赋值号, 取下一记号, 否则出错}
+          expression(fsys); {处理表达式}
+          if i <> 0 then {若赋值号左边的变量id有定义}
+            with table[i] do gen(sto, lev-level, adr)
+            {生成一条存数指令, 将栈顶(表达式)的值存入变量id中;
+            lev: 当前语句所在过程的层号;
+            level: 定义变量id的过程的层号;
+            adr: 变量id在其过程的数据空间的相对地址}
+        end 
+      else if sym = callsym then {处理过程调用语句}
+        begin  
+          getsym; {取下一记号}
+          if sym <> ident then error(14) 
+          else {如果下一记号不是标识符(过程名),则出错,否则做以下工作}
+            begin 
+              i := position(id); {查符号表,返回id在表中的位置}
+              if i = 0 then error(11) 
+              else {如果在符号表中查不到, 则出错; 否则,做以下工作}
+                with table[i] do
+                  if kind = proc then 
+                    {如果在符号表中id是过程名}
+                    gen(cal, lev-level, adr)
+                    {生成一条过程调用指令;
+                     lev: 当前语句所在过程的层号
+                     level: 定义过程名id的层号;
+                     adr: 过程id的代码中第一条指令的地址}
+                  else error(15); {若id不是过程名,则出错}
+              getsym {取下一记号}
+            end
+        end 
+      else if sym = ifsym then {处理条件语句}
+        begin
+          getsym; {取下一记号} 
+          condition([thensym, dosym]+fsys); {处理条件表达式}
+          if sym = thensym then getsym else error(16);
+          {如果当前记号是“then”,则取下一记号; 否则出错}
+          cx1 := cx; {cx1记录下一代码的地址} 
+          gen(jpc, 0, 0); {生成指令,表达式为“假”转到某地址(待填),
+          否则顺序执行}
+          statement(fsys); {处理一个语句}
+          code[cx1].a := cx 
+          {将下一个指令的地址回填到上面的jpc指令地址栏}
+        end
+      else if sym = beginsym then {处理语句序列}
+        begin
+          getsym;  statement([semicolon, endsym]+fsys);
+          {取下一记号, 处理第一个语句}
+          while sym in [semicolon]+statbegsys do 
+            {如果当前记号是分号或语句的开始符号,则做以下工作}
+            begin
+              if sym = semicolon then getsym else error(10);
+              {如果当前记号是分号,则取下一记号, 否则出错}
+              statement([semicolon, endsym]+fsys) {处理下一个语句}
+            end;
+          if sym = endsym then getsym else error(17)
+          {如果当前记号是“end”,则取下一记号,否则出错}
+        end 
+      else if sym = whilesym then {处理循环语句}
+        begin
+          cx1 := cx; {cx1记录下一指令地址,即条件表达式的
+          第一条代码的地址} 
+          getsym; {取下一记号}
+          condition([dosym]+fsys); {处理条件表达式}
+          cx2 := cx; {记录下一指令的地址} 
+          gen(jpc, 0, 0); {生成一条指令,表达式为“假”转到某地
+          址(待回填), 否则顺序执行}
+          if sym = dosym then getsym else error(18);
+          {如果当前记号是“do”,则取下一记号, 否则出错}
+          statement(fsys); {处理“do”后面的语句}
+          gen(jmp, 0, cx1); {生成无条件转移指令, 转移到“while”后的
+          条件表达式的代码的第一条指令处} 
+          code[cx2].a := cx 
+          {把下一指令地址回填到前面生成的jpc指令的地址栏}
+        end;
+      test(fsys, [ ], 19) 
+      {测试下一记号是否正常, 否则出错, 跳过一些记号}
+    end {statement};
 
   begin {block}
     dx := 3; {本过程数据空间栈顶指针} 
@@ -565,8 +565,8 @@ procedure  block(lev, tx : integer; fsys : symset);
     {回到说明语句的处理(出错时才用),直到当前记号不是说明语句
      的开始符号}
     code[table[tx0].adr].a := cx;  {table[tx0].adr是本过程名的第1条
-	  代码(jmp, 0, 0)的地址,本语句即是将下一代码(本过程语句的第
-	  1条代码)的地址回填到该jmp指令中,得(jmp, 0, cx)}
+    代码(jmp, 0, 0)的地址,本语句即是将下一代码(本过程语句的第
+    1条代码)的地址回填到该jmp指令中,得(jmp, 0, cx)}
     with table[tx0] do {本过程名的第1条代码的地址改为下一指令地址cx}
       begin  
         adr := cx; {代码开始地址}
@@ -582,125 +582,125 @@ procedure  block(lev, tx : integer; fsys : symset);
 
 
 procedure  interpret;
-	const  stacksize = 500; {运行时数据空间(栈)的上界}
-	var  p, b, t : integer; {程序地址寄存器, 基地址寄存器,栈顶地址寄存器}
-	     i : instruction; {指令寄存器}
-	     s : array [1..stacksize] of integer; {数据存储栈}
+  const  stacksize = 500; {运行时数据空间(栈)的上界}
+  var  p, b, t : integer; {程序地址寄存器, 基地址寄存器,栈顶地址寄存器}
+       i : instruction; {指令寄存器}
+       s : array [1..stacksize] of integer; {数据存储栈}
 
-	function  base(l : integer) : integer;
-	  var  b1 : integer;
-		begin
-		  b1 := b; {顺静态链求层差为l的外层的基地址}
-		  while l > 0 do
-		  begin  b1 := s[b1];  l := l-1 end;
-		  base := b1
-		end {base};
+  function  base(l : integer) : integer;
+    var  b1 : integer;
+    begin
+      b1 := b; {顺静态链求层差为l的外层的基地址}
+      while l > 0 do
+      begin  b1 := s[b1];  l := l-1 end;
+      base := b1
+    end {base};
 
   begin  
-  	writeln(fileOut, 'START PL/0');
-		t := 0; {栈顶地址寄存器}
-		b := 1; {基地址寄存器}
-		p := 0; {程序地址寄存器}
-		s[1] := 0;  s[2] := 0;  s[3] := 0; 
-		{最外层主程序数据空间栈最下面预留三个单元}
-		{每个过程运行时的数据空间的前三个单元是:SL, DL, RA;
-		SL: 指向本过程静态直接外层过程的SL单元;
-		DL: 指向调用本过程的过程的最新数据空间的第一个单元;
-		RA: 返回地址 }
-		repeat
-		  i := code[p]; {i取程序地址寄存器p指示的当前指令}
-			p := p+1; {程序地址寄存器p加1,指向下一条指令}
-		  with i do
-		  case f of
-		  	lit : 
-		  		begin {当前指令是取常数指令(lit, 0, a)}
-						t := t+1;  s[t] := a
-		      end;
-		  		{栈顶指针加1, 把常数a取到栈顶}
-				opr : case a of {当前指令是运算指令(opr, 0, a)}
-					0 : begin {a=0时,是返回调用过程指令}
-						  t := b-1; {恢复调用过程栈顶} 
-							p := s[t+3]; {程序地址寄存器p取返回地址} 
-							b := s[t+2]; 
-							{基地址寄存器b指向调用过程的基地址}
-						end;
-					1 : s[t] := -s[t]; {一元负运算, 栈顶元素的值反号}
-					2 : begin {加法}
-					    t := t-1;  s[t] := s[t] + s[t+1] 
-					  end;
-					3 : begin {减法}
-					    t := t-1;  s[t] := s[t]-s[t+1]
-					  end;
-					4 : begin {乘法}
-					    t := t-1;  s[t] := s[t] * s[t+1]
-					  end;
-					5 : begin {整数除法}
-					    t := t-1;  s[t] := s[t] div s[t+1]
-					  end;
-					6 : s[t] := ord(odd(s[t])); 
-					{算s[t]是否奇数, 是则s[t]=1, 否则s[t]=0}
-					8 : begin  t := t-1;
-					    s[t] := ord(s[t] = s[t+1])
-					  end; {判两个表达式的值是否相等,
-					       是则s[t]=1, 否则s[t]=0}
-					9: begin  t := t-1;
-					    s[t] := ord(s[t] <> s[t+1])
-					  end; {判两个表达式的值是否不等,
-					       是则s[t]=1, 否则s[t]=0}
-					10 : begin  t := t-1;
-					    s[t] := ord(s[t] < s[t+1])
-					  end; {判前一表达式是否小于后一表达式,
-					       是则s[t]=1, 否则s[t]=0}
-					11: begin  t := t-1;
-					    s[t] := ord(s[t] >= s[t+1])
-					  end; {判前一表达式是否大于或等于后一表达式,
-					     是则s[t]=1, 否则s[t]=0}
-					12 : begin  t := t-1;
-					    s[t] := ord(s[t] > s[t+1])
-					  end; {判前一表达式是否大于后一表达式,
-					       是则s[t]=1, 否则s[t]=0}
-					13 : begin  t := t-1;
-					    s[t] := ord(s[t] <= s[t+1])
-					  end; {判前一表达式是否小于或等于后一表达式,
-					      是则s[t]=1, 否则s[t]=0}
-					end;
-  			lod : begin {当前指令是取变量指令(lod, l, a)}
-	        	t := t + 1;  s[t] := s[base(l) + a]
-		        {栈顶指针加1, 根据静态链SL,将层差为l,相对地址
-		         为a的变量值取到栈顶}
-       		end;
-  			sto : begin {当前指令是保存变量值(sto, l, a)指令}
-		        s[base(l) + a] := s[t];  writeln(fileOut, s[t]); 
-		        {根据静态链SL,将栈顶的值存入层差为l,相对地址
-		          为a的变量中}
-		        t := t-1 {栈顶指针减1}
-		      end;
-			  cal : begin {当前指令是(cal, l, a)}
-			      {为被调用过程数据空间建立连接数据}
-		        s[t+1] := base( l ); 
-			        {根据层差l找到本过程的静态直接外层过程的数据空间的SL单元,将其地址存入本过程新的数据空间的
-			          SL单元} 
-						s[t+2] := b; 
-						{调用过程的数据空间的起始地址存入本过程DL单元}
-		        s[t+3] := p;
-		       {调用过程cal指令的下一条的地址存入本过程RA单元}
-		        b := t+1; {b指向被调用过程新的数据空间起始地址} 
-						p := a {指令地址寄存储器指向被调用过程的地址a}
-		      end;
-			  int : t := t + a; 
-						{若当前指令是(int, 0, a), 则数据空间栈顶留出a大小的空间}
-			  jmp : p := a; 
-						{若当前指令是(jmp, 0, a), 则程序转到地址a执行}
-			  jpc : begin {当前指令是(jpc, 0, a)}
-		        if s[t] = 0 then p := a;
-		        {如果当前运算结果为“假”(0), 程序转到地址a
-		         执行, 否则顺序执行}
-		        t := t-1 {数据栈顶指针减1}
-		      end
-			  end {with, case}
-		until p = 0; 
-		{程序一直执行到p取最外层主程序的返回地址0时为止}
-		write(fileOut, 'END PL/0');
+    writeln(fileOut, 'START PL/0');
+    t := 0; {栈顶地址寄存器}
+    b := 1; {基地址寄存器}
+    p := 0; {程序地址寄存器}
+    s[1] := 0;  s[2] := 0;  s[3] := 0; 
+    {最外层主程序数据空间栈最下面预留三个单元}
+    {每个过程运行时的数据空间的前三个单元是:SL, DL, RA;
+    SL: 指向本过程静态直接外层过程的SL单元;
+    DL: 指向调用本过程的过程的最新数据空间的第一个单元;
+    RA: 返回地址 }
+    repeat
+      i := code[p]; {i取程序地址寄存器p指示的当前指令}
+      p := p+1; {程序地址寄存器p加1,指向下一条指令}
+      with i do
+      case f of
+        lit : 
+          begin {当前指令是取常数指令(lit, 0, a)}
+            t := t+1;  s[t] := a
+          end;
+          {栈顶指针加1, 把常数a取到栈顶}
+        opr : case a of {当前指令是运算指令(opr, 0, a)}
+          0 : begin {a=0时,是返回调用过程指令}
+              t := b-1; {恢复调用过程栈顶} 
+              p := s[t+3]; {程序地址寄存器p取返回地址} 
+              b := s[t+2]; 
+              {基地址寄存器b指向调用过程的基地址}
+            end;
+          1 : s[t] := -s[t]; {一元负运算, 栈顶元素的值反号}
+          2 : begin {加法}
+              t := t-1;  s[t] := s[t] + s[t+1] 
+            end;
+          3 : begin {减法}
+              t := t-1;  s[t] := s[t]-s[t+1]
+            end;
+          4 : begin {乘法}
+              t := t-1;  s[t] := s[t] * s[t+1]
+            end;
+          5 : begin {整数除法}
+              t := t-1;  s[t] := s[t] div s[t+1]
+            end;
+          6 : s[t] := ord(odd(s[t])); 
+          {算s[t]是否奇数, 是则s[t]=1, 否则s[t]=0}
+          8 : begin  t := t-1;
+              s[t] := ord(s[t] = s[t+1])
+            end; {判两个表达式的值是否相等,
+                 是则s[t]=1, 否则s[t]=0}
+          9: begin  t := t-1;
+              s[t] := ord(s[t] <> s[t+1])
+            end; {判两个表达式的值是否不等,
+                 是则s[t]=1, 否则s[t]=0}
+          10 : begin  t := t-1;
+              s[t] := ord(s[t] < s[t+1])
+            end; {判前一表达式是否小于后一表达式,
+                 是则s[t]=1, 否则s[t]=0}
+          11: begin  t := t-1;
+              s[t] := ord(s[t] >= s[t+1])
+            end; {判前一表达式是否大于或等于后一表达式,
+               是则s[t]=1, 否则s[t]=0}
+          12 : begin  t := t-1;
+              s[t] := ord(s[t] > s[t+1])
+            end; {判前一表达式是否大于后一表达式,
+                 是则s[t]=1, 否则s[t]=0}
+          13 : begin  t := t-1;
+              s[t] := ord(s[t] <= s[t+1])
+            end; {判前一表达式是否小于或等于后一表达式,
+                是则s[t]=1, 否则s[t]=0}
+          end;
+        lod : begin {当前指令是取变量指令(lod, l, a)}
+            t := t + 1;  s[t] := s[base(l) + a]
+            {栈顶指针加1, 根据静态链SL,将层差为l,相对地址
+             为a的变量值取到栈顶}
+          end;
+        sto : begin {当前指令是保存变量值(sto, l, a)指令}
+            s[base(l) + a] := s[t];  writeln(fileOut, s[t]); 
+            {根据静态链SL,将栈顶的值存入层差为l,相对地址
+              为a的变量中}
+            t := t-1 {栈顶指针减1}
+          end;
+        cal : begin {当前指令是(cal, l, a)}
+            {为被调用过程数据空间建立连接数据}
+            s[t+1] := base( l ); 
+              {根据层差l找到本过程的静态直接外层过程的数据空间的SL单元,将其地址存入本过程新的数据空间的
+                SL单元} 
+            s[t+2] := b; 
+            {调用过程的数据空间的起始地址存入本过程DL单元}
+            s[t+3] := p;
+           {调用过程cal指令的下一条的地址存入本过程RA单元}
+            b := t+1; {b指向被调用过程新的数据空间起始地址} 
+            p := a {指令地址寄存储器指向被调用过程的地址a}
+          end;
+        int : t := t + a; 
+            {若当前指令是(int, 0, a), 则数据空间栈顶留出a大小的空间}
+        jmp : p := a; 
+            {若当前指令是(jmp, 0, a), 则程序转到地址a执行}
+        jpc : begin {当前指令是(jpc, 0, a)}
+            if s[t] = 0 then p := a;
+            {如果当前运算结果为“假”(0), 程序转到地址a
+             执行, 否则顺序执行}
+            t := t-1 {数据栈顶指针减1}
+          end
+        end {with, case}
+    until p = 0; 
+    {程序一直执行到p取最外层主程序的返回地址0时为止}
+    write(fileOut, 'END PL/0');
   end {interpret};
 
 begin  {主程序}
@@ -727,7 +727,7 @@ begin  {主程序}
   ssym['('] := lparen;    ssym[')'] := rparen;
   ssym['='] := eql;       ssym[','] := comma;
   ssym['.'] := period;    ssym['<'] := lss;       
-  ssym['>'] := gtr;				ssym[';'] := semicolon;
+  ssym['>'] := gtr;       ssym[';'] := semicolon;
   mnemonic[lit] := 'LIT';    mnemonic[opr] := 'OPR';
   mnemonic[lod] := 'LOD';    mnemonic[sto] := 'STO';
   mnemonic[cal] := 'CAL';    mnemonic[int] := 'INT';
